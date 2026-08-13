@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="description" content="Mavis - 你的私人 AI 助手" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="icon" href="icon-192.png" />
+  <title>Mavis</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <div class="status-bar-spacer"></div>
+
+    <!-- ============ 聊天 ============ -->
+    <section class="view active" id="view-chat">
+      <header class="top-bar">
+        <button class="icon-btn" id="new-chat-btn" aria-label="新对话/历史">
+          <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <div class="top-title" id="chat-title">Mavis</div>
+        <button class="icon-btn" id="chat-menu-btn" aria-label="菜单">
+          <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="5" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="19" r="1.8" fill="currentColor"/></svg>
+        </button>
+      </header>
+      <div class="role-bar" id="role-bar" style="display:none">
+        <span class="role-avatar-sm" id="role-avatar">✨</span>
+        <span class="role-name-sm" id="role-name">Mavis 助手</span>
+        <span class="role-switch">切换 ›</span>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="input-bar" id="input-bar">
+        <button class="icon-btn plus-btn" id="plus-btn" aria-label="添加">
+          <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
+        <input type="file" id="file-input" style="display:none" />
+        <input type="file" id="image-input" accept="image/*" style="display:none" />
+        <div class="input-wrap">
+          <div class="attach-preview" id="attach-preview" style="display:none">
+            <div class="ap-card" id="ap-card">
+              <span class="ap-icon" id="ap-icon">📎</span>
+              <span class="ap-name" id="ap-name"></span>
+              <img class="ap-thumb" id="ap-thumb" style="display:none" />
+              <button class="ap-remove" id="ap-remove">×</button>
+            </div>
+          </div>
+          <textarea id="input" rows="1" placeholder="输入消息..."></textarea>
+        </div>
+        <button class="send-btn" id="send-btn" aria-label="发送" disabled>
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 11l18-8-8 18-2-8-8-2z" fill="currentColor"/></svg>
+        </button>
+      </div>
+
+      <!-- 加号弹出菜单 -->
+      <div class="plus-menu" id="plus-menu">
+        <button class="plus-menu-item" data-type="image">
+          <span class="pm-icon">🖼️</span><span>图片</span>
+        </button>
+        <button class="plus-menu-item" data-type="file">
+          <span class="pm-icon">📎</span><span>文件</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ============ 任务 ============ -->
+    <section class="view" id="view-tasks">
+      <header class="top-bar">
+        <div class="top-title">任务</div>
+        <button class="icon-btn" id="add-task-btn" aria-label="新建任务">
+          <svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </button>
+      </header>
+      <div class="tasks-summary" id="tasks-summary">
+        <div class="ts-item"><div class="ts-num" id="ts-total">0</div><div class="ts-label">全部</div></div>
+        <div class="ts-item"><div class="ts-num" id="ts-active">0</div><div class="ts-label">进行中</div></div>
+        <div class="ts-item"><div class="ts-num" id="ts-done">0</div><div class="ts-label">已完成</div></div>
+      </div>
+      <div class="tasks-scroll">
+        <div class="section-label" id="task-group-today">今天</div>
+        <div id="tasks-today"></div>
+        <div class="section-label">待办</div>
+        <div id="tasks-pending"></div>
+        <div class="section-label">已完成</div>
+        <div id="tasks-done"></div>
+      </div>
+    </section>
+
+    <!-- ============ 朋友圈（微信风格）============ -->
+    <section class="view" id="view-moments">
+      <header class="top-bar">
+        <div class="top-title">朋友圈</div>
+        <button class="icon-btn ai-moment-icon" id="ai-moment-btn" aria-label="AI发动态" title="让 AI 自动发一条动态">
+          <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="currentColor"/></svg>
+        </button>
+        <button class="icon-btn" id="post-moment-btn" aria-label="发布动态" title="发布动态">
+          <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </button>
+      </header>
+      <div class="moments-scroll">
+        <div class="moments-cover">
+          <div class="moments-cover-bg"></div>
+          <div class="moments-me">
+            <div class="moments-nickname" id="me-nickname">Mavis 用户</div>
+            <div class="moments-avatar" id="me-avatar">🦊</div>
+          </div>
+        </div>
+        <div class="moments-list" id="moments-list"></div>
+      </div>
+    </section>
+
+    <!-- ============ 提示词库 ============ -->
+    <section class="view" id="view-prompts">
+      <header class="top-bar">
+        <button class="icon-btn" id="prompts-back-btn" aria-label="返回">
+          <svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </button>
+        <div class="top-title">提示词库</div>
+      </header>
+      <div class="prompts-scroll">
+        <div class="pl-switch-row">
+          <div class="pl-switch-text">
+            <div class="pl-switch-title">启用提示词库</div>
+            <div class="pl-switch-desc">开启后聊天会注入预设/世界书</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="pl-switch" /><span class="slider"></span></label>
+        </div>
+
+        <div class="pl-section">
+          <div class="pl-section-head">
+            <div class="pl-section-title">🧩 正则 (Regex)</div>
+            <div class="pl-section-btns">
+              <button class="pl-link-btn pl-import-btn" data-type="regex">导入</button>
+              <button class="pl-link-btn pl-add-btn" data-type="regex">+ 新建</button>
+            </div>
+          </div>
+          <div class="pl-list" id="pl-regex-list"></div>
+        </div>
+
+        <div class="pl-section">
+          <div class="pl-section-head">
+            <div class="pl-section-title">🌍 世界书 (World Info)</div>
+            <div class="pl-section-btns">
+              <button class="pl-link-btn pl-import-btn" data-type="worldbook">导入</button>
+              <button class="pl-link-btn pl-add-btn" data-type="worldbook">+ 新建</button>
+            </div>
+          </div>
+          <div class="pl-list" id="pl-worldbook-list"></div>
+        </div>
+
+        <div class="pl-section">
+          <div class="pl-section-head">
+            <div class="pl-section-title">📝 预设 (Preset)</div>
+            <div class="pl-section-btns">
+              <button class="pl-link-btn pl-import-btn" data-type="preset">导入</button>
+              <button class="pl-link-btn pl-add-btn" data-type="preset">+ 新建</button>
+            </div>
+          </div>
+          <div class="pl-list" id="pl-preset-list"></div>
+        </div>
+
+        <div class="pl-hint">提示词库模仿酒馆/tavo 风格：正则在回复文本上做替换，世界书按关键词触发，预设作为额外系统提示注入。支持导入 SillyTavern / tavo 格式的 JSON。</div>
+      </div>
+    </section>
+
+    <!-- ============ 我的 ============ -->
+    <section class="view" id="view-me">
+      <header class="top-bar">
+        <div class="top-title">我的</div>
+      </header>
+      <div class="me-scroll">
+        <div class="me-profile">
+          <div class="me-avatar" id="me-avatar-2">🦊</div>
+          <div class="me-info">
+            <div class="me-name" id="me-name-2">Mavis 用户</div>
+            <div class="me-id">Mavis ID: <span id="me-id">--</span></div>
+          </div>
+          <button class="icon-btn" id="edit-profile-btn" aria-label="编辑">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          </button>
+        </div>
+
+        <div class="me-stats">
+          <div class="ms-item"><div class="ms-num" id="ms-moments">0</div><div class="ms-label">动态</div></div>
+          <div class="ms-item"><div class="ms-num" id="ms-tasks">0</div><div class="ms-label">任务</div></div>
+          <div class="ms-item"><div class="ms-num" id="ms-chats">0</div><div class="ms-label">对话</div></div>
+        </div>
+
+        <div class="settings-group">
+          <div class="group-title">AI 助手</div>
+          <button class="setting-item row action" data-action="roles">
+            <div class="si-icon">🎭</div>
+            <div class="si-label">角色管理</div>
+            <span class="chevron">›</span>
+          </button>
+          <button class="setting-item row action" data-action="api">
+            <div class="si-icon">🔗</div>
+            <div class="si-label">API 配置</div>
+            <span class="chevron">›</span>
+          </button>
+          <button class="setting-item row action" id="me-usage-btn">
+            <div class="si-icon">📊</div>
+            <div class="si-label">用量统计</div>
+            <span class="chevron">›</span>
+          </button>
+          <button class="setting-item row action" data-action="prompts">
+            <div class="si-icon">📚</div>
+            <div class="si-label">提示词库</div>
+            <span class="chevron">›</span>
+          </button>
+          <button class="setting-item row action" id="skill-library-btn">
+            <div class="si-icon">🛠️</div>
+            <div class="si-label">Skill 技能库</div>
+            <span class="si-val" id="skill-count">0 已装载</span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+
+        <div class="settings-group">
+          <div class="group-title">通用</div>
+          <button class="setting-item row action">
+            <div class="si-icon">🌙</div>
+            <div class="si-label">深色模式</div>
+            <label class="switch" onclick="event.stopPropagation()"><input type="checkbox" id="set-dark" /><span class="slider"></span></label>
+          </button>
+          <button class="setting-item row action" data-action="appname">
+            <div class="si-icon">✏️</div>
+            <div class="si-label">应用名称</div>
+            <span class="si-val" id="set-appname-val">Mavis</span>
+            <span class="chevron">›</span>
+          </button>
+          <button class="setting-item row action" id="font-size-btn">
+            <div class="si-icon">🔤</div>
+            <div class="si-label">字体大小</div>
+            <span class="si-val" id="font-size-val">标准</span>
+            <span class="chevron">›</span>
+          </button>
+          <button class="setting-item row action" id="chat-bg-btn">
+            <div class="si-icon">🖼️</div>
+            <div class="si-label">聊天背景</div>
+            <span class="si-val" id="chat-bg-val">默认</span>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+
+        <div class="settings-group">
+          <div class="group-title">数据</div>
+          <button class="setting-item row action" id="export-btn">
+            <div class="si-icon">📤</div>
+            <div class="si-label">导出全部数据</div>
+            <span class="chevron">›</span>
+          </button>
+          <button class="setting-item row action danger" id="clear-all-btn">
+            <div class="si-icon">🗑</div>
+            <div class="si-label">清空所有数据</div>
+            <span class="chevron">›</span>
+          </button>
+        </div>
+
+        <div class="about">
+          <div class="about-name" id="about-name">Mavis</div>
+          <div class="about-version">私人版 · v3.7</div>
+          <div class="about-tip">由你掌控的 AI 助手</div>
+          <button class="about-update-btn" id="about-check-update" type="button">
+            <span class="au-icon">🔄</span>
+            <span>检查更新</span>
+          </button>
+          <div class="about-update-hint" id="about-update-hint">已是最新版本</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 底部 Tab 栏 ============ -->
+    <nav class="tab-bar" id="tab-bar">
+      <button class="tab active" data-view="chat">
+        <svg viewBox="0 0 24 24" width="24" height="24"><path d="M4 5h16v10H7l-3 3V5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/></svg>
+        <span>聊天</span>
+      </button>
+      <button class="tab" data-view="tasks">
+        <svg viewBox="0 0 24 24" width="24" height="24"><path d="M4 6h16M4 12h10M4 18h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16 14l2.5 2.5L22 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        <span>任务</span>
+      </button>
+      <button class="tab" data-view="moments">
+        <svg viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+        <span>朋友圈</span>
+      </button>
+      <button class="tab" data-view="me">
+        <svg viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+        <span>我的</span>
+      </button>
+    </nav>
+
+    <!-- ============ 弹窗：会话列表（左上角加号）============ -->
+    <div class="sheet-overlay" id="sessions-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">聊天会话</div>
+        <div class="sheet-body" id="sessions-list-body"></div>
+        <div class="sheet-actions">
+          <button class="btn-ghost" id="sessions-outputs" type="button">📦 产出物</button>
+          <button class="btn-ghost" id="roles-list-close2" onclick="document.getElementById('sessions-sheet-overlay').classList.remove('show')">关闭</button>
+          <button class="btn-primary" id="sessions-new">+ 新建聊天</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：产出物（办公室产出）============ -->
+    <div class="sheet-overlay" id="outputs-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">📦 办公室产出物</div>
+        <div class="sheet-body">
+          <div class="outputs-tabs">
+            <button class="outputs-tab active" data-range="all">全部</button>
+            <button class="outputs-tab" data-range="current">本会话</button>
+          </div>
+          <div class="outputs-list" id="outputs-list"></div>
+        </div>
+        <div class="sheet-actions">
+          <button class="btn-ghost" id="outputs-clear-all" type="button">清空全部</button>
+          <button class="btn-primary" id="outputs-close">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：发布朋友圈 ============ -->
+    <div class="sheet-overlay" id="moment-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">发表动态</div>
+        <div class="sheet-body">
+          <div class="sheet-field">
+            <textarea id="mf-text" rows="4" placeholder="这一刻的想法..."></textarea>
+          </div>
+          <div class="sheet-field">
+            <label>配图 (可选，最多9张)</label>
+            <div class="mf-thumbs" id="mf-thumbs"></div>
+            <button class="mf-add-img" id="mf-add-img">+ 添加图片</button>
+            <input type="file" id="mf-img-input" accept="image/*" style="display:none" />
+          </div>
+          <div class="sheet-actions">
+            <button class="btn-ghost" id="mf-cancel">取消</button>
+            <button class="btn-primary" id="mf-publish">发表</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：新建/编辑任务 ============ -->
+    <div class="sheet-overlay" id="task-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title" id="task-sheet-title">新建任务</div>
+        <div class="sheet-body">
+          <div class="sheet-field">
+            <input type="text" id="tf-title" placeholder="任务标题" />
+          </div>
+          <div class="sheet-field">
+            <label>备注</label>
+            <textarea id="tf-note" rows="2" placeholder="补充说明 (可选)"></textarea>
+          </div>
+          <div class="sheet-field">
+            <label>日期</label>
+            <select id="tf-date">
+              <option value="today">今天</option>
+              <option value="tomorrow">明天</option>
+              <option value="pending">待办</option>
+            </select>
+          </div>
+          <div class="sheet-field">
+            <label>优先级</label>
+            <select id="tf-priority">
+              <option value="0">普通</option>
+              <option value="1">重要</option>
+              <option value="2">紧急</option>
+            </select>
+          </div>
+          <div class="sheet-actions">
+            <button class="btn-ghost" id="tf-delete" style="display:none">删除</button>
+            <button class="btn-primary" id="tf-save">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：角色编辑 ============ -->
+    <div class="sheet-overlay" id="role-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title" id="role-sheet-title">角色</div>
+        <div class="sheet-body">
+          <div class="avatar-edit-row">
+            <div class="avatar-preview" id="rf-avatar-preview">
+              <img id="rf-avatar-img" style="display:none" />
+              <span id="rf-avatar-emoji">🤖</span>
+            </div>
+            <div class="avatar-edit-btns">
+              <button class="btn-mini" id="rf-avatar-upload" type="button">📷 上传照片</button>
+              <button class="btn-mini ghost" id="rf-avatar-clear" type="button">清除</button>
+            </div>
+          </div>
+          <div class="sheet-field">
+            <label>头像 (emoji，未上传照片时使用)</label>
+            <input type="text" id="rf-avatar" maxlength="4" placeholder="🤖" />
+          </div>
+          <div class="sheet-field">
+            <label>名称</label>
+            <input type="text" id="rf-name" placeholder="例如：贴心管家" />
+          </div>
+          <div class="sheet-field">
+            <label>简介</label>
+            <input type="text" id="rf-desc" placeholder="一句话介绍" />
+          </div>
+          <div class="sheet-field">
+            <label>系统提示词 (人设)</label>
+            <textarea id="rf-prompt" rows="4" placeholder="你是一个..."></textarea>
+          </div>
+          <div class="sheet-actions">
+            <button class="btn-ghost" id="rf-delete" style="display:none">删除</button>
+            <button class="btn-primary" id="rf-save">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：API 配置 ============ -->
+    <div class="sheet-overlay" id="api-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <!-- 顶部标题栏：左标题 + 右新建 -->
+        <div class="api-sheet-header">
+          <div class="api-sheet-title">选择模型配置</div>
+          <button class="api-new-btn" id="api-new-config" type="button">+ 新建</button>
+        </div>
+        <div class="sheet-body">
+          <!-- 配置选择下拉框 -->
+          <div class="api-config-selector" id="api-config-selector">
+            <div class="acs-current">
+              <span class="acs-name" id="acs-current-name">默认配置</span>
+              <span class="acs-arrow">▼</span>
+            </div>
+            <div class="acs-dropdown" id="acs-dropdown"></div>
+          </div>
+          <!-- 配置编辑表单 -->
+          <div class="sheet-field">
+            <label>配置名称</label>
+            <input type="text" id="set-config-name" placeholder="例如：DeepSeek / 通义千问 / GPT-4o" />
+          </div>
+          <div class="sheet-field">
+            <label>接口地址 (Base URL)</label>
+            <input type="text" id="set-endpoint" placeholder="https://api.openai.com/v1" />
+          </div>
+          <div class="sheet-field">
+            <label>API Key</label>
+            <input type="password" id="set-apikey" placeholder="sk-..." />
+            <div class="setting-hint" style="color:var(--text-secondary);font-size:12px;margin-top:4px">API Key 仅保存在本机，请勿分享设备</div>
+          </div>
+          <div class="sheet-field">
+            <label>模型 (Model)</label>
+            <div class="model-row">
+              <input type="text" id="set-model" placeholder="gpt-4o-mini" />
+              <button class="btn-mini" id="fetch-models-btn" type="button">拉取</button>
+            </div>
+            <div class="models-list" id="models-list" style="display:none"></div>
+          </div>
+          <div class="setting-hint">兼容 OpenAI 协议：OpenAI / DeepSeek / Moonshot / 智谱 / 通义 等</div>
+          <div class="sheet-field row">
+            <label>流式输出</label>
+            <label class="switch"><input type="checkbox" id="set-stream" checked /><span class="slider"></span></label>
+          </div>
+          <div class="sheet-field row">
+            <label>记忆长度</label>
+            <input type="number" id="set-memory" class="num-input" min="2" max="50" value="12" />
+          </div>
+          <div class="sheet-field row">
+            <label>温度 (0~2)</label>
+            <input type="number" id="set-temp" class="num-input" min="0" max="2" step="0.1" value="0.7" />
+          </div>
+          <div class="sheet-field">
+            <label>深度思考 (Reasoning)</label>
+            <div class="reasoning-row">
+              <label class="switch"><input type="checkbox" id="set-reasoning" /><span class="slider"></span></label>
+              <span class="reasoning-label">开启</span>
+              <select id="set-reasoning-level" class="num-input" style="width:auto">
+                <option value="1">1 级（轻）</option>
+                <option value="2">2 级</option>
+                <option value="3">3 级（中）</option>
+                <option value="4">4 级</option>
+                <option value="5">5 级（深）</option>
+              </select>
+            </div>
+            <div class="setting-hint">开启后调用时会带 reasoning_effort 参数（DeepSeek/o1 等支持）</div>
+          </div>
+          <div class="sheet-field row">
+            <label>聊天中体现深度思考</label>
+            <label class="switch"><input type="checkbox" id="set-reasoning-show" /><span class="slider"></span></label>
+          </div>
+          <div class="setting-hint">关闭则后台思考但不显示思考过程</div>
+          <div class="sheet-field row">
+            <label>🌐 互联网搜索</label>
+            <label class="switch"><input type="checkbox" id="set-websearch" /><span class="slider"></span></label>
+          </div>
+          <div class="setting-hint">开启后模型可联网搜索（支持智谱/通义/OpenAI/月之暗面等）</div>
+          <!-- 测试连接 -->
+          <button class="api-test-btn" id="api-test-btn" type="button">
+            <span class="at-icon">🔌</span>
+            <span class="at-text">测试连接</span>
+            <span class="at-status" id="api-test-status"></span>
+          </button>
+          <div class="sheet-actions">
+            <button class="btn-ghost" id="api-delete-btn" type="button" style="display:none">🗑 删除</button>
+            <button class="btn-ghost" id="api-usage-btn" type="button">📊 用量统计</button>
+            <button class="btn-primary" id="api-save">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：角色选择列表 ============ -->
+    <div class="sheet-overlay" id="roles-list-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">选择角色（点击切换激活/停用，长按编辑）</div>
+        <div class="sheet-body" id="roles-list-body"></div>
+        <div class="sheet-actions">
+          <button class="btn-ghost" id="roles-list-close">关闭</button>
+          <button class="btn-mini" id="roles-list-import-tavern" type="button">导入酒馆卡</button>
+          <button class="btn-mini" id="roles-list-import-tavo" type="button">导入 tavo</button>
+          <button class="btn-primary" id="roles-list-add">+ 新建</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：聊天菜单 ============ -->
+    <div class="sheet-overlay" id="chat-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <button class="sheet-item" id="menu-roles">🎭 切换角色</button>
+        <button class="sheet-item" id="menu-memory">🧠 记忆库</button>
+        <button class="sheet-item" id="menu-copy-last">📋 复制最后回复</button>
+        <button class="sheet-item" id="menu-regen">🔄 重新生成</button>
+        <button class="sheet-item danger" id="menu-clear">🗑 清空当前对话</button>
+        <button class="sheet-item cancel">取消</button>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：消息长按操作 ============ -->
+    <div class="sheet-overlay" id="msg-action-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <button class="sheet-item" id="msgact-quote">💬 引用</button>
+        <button class="sheet-item" id="msgact-copy">📋 复制</button>
+        <button class="sheet-item" id="msgact-regen">🔄 重新生成</button>
+        <button class="sheet-item danger" id="msgact-delete">🗑 删除</button>
+        <button class="sheet-item cancel">取消</button>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：记忆库 ============ -->
+    <div class="sheet-overlay" id="memory-sheet-overlay">
+      <div class="sheet" style="max-height: 85vh">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">🧠 记忆库</div>
+        <div class="sheet-body">
+          <div class="setting-hint">AI 会自动记住你说的重点，并在后续对话中引用。也可以手动添加。</div>
+          <div class="memory-actions">
+            <button class="btn-ghost" id="mem-add-btn" type="button">+ 手动添加</button>
+            <button class="btn-ghost" id="mem-clear-btn" type="button">🗑 清空</button>
+          </div>
+          <div class="memory-list" id="memory-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：编辑资料 ============ -->
+    <div class="sheet-overlay" id="profile-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">编辑资料</div>
+        <div class="sheet-body">
+          <div class="avatar-edit-row">
+            <div class="avatar-preview" id="pf-avatar-preview">
+              <img id="pf-avatar-img" style="display:none" />
+              <span id="pf-avatar-emoji">🦊</span>
+            </div>
+            <div class="avatar-edit-btns">
+              <button class="btn-mini" id="pf-avatar-upload" type="button">📷 上传照片</button>
+              <button class="btn-mini ghost" id="pf-avatar-clear" type="button">清除</button>
+            </div>
+          </div>
+          <div class="sheet-field">
+            <label>头像 (emoji，未上传照片时使用)</label>
+            <input type="text" id="pf-avatar" maxlength="4" placeholder="🦊" />
+          </div>
+          <div class="sheet-field">
+            <label>昵称</label>
+            <input type="text" id="pf-name" placeholder="你的昵称" />
+          </div>
+          <div class="sheet-actions">
+            <button class="btn-ghost" id="pf-cancel">取消</button>
+            <button class="btn-primary" id="pf-save">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：聊天背景 ============ -->
+    <div class="sheet-overlay" id="chatbg-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">聊天背景</div>
+        <div class="sheet-body">
+          <div class="chatbg-preview" id="chatbg-preview">
+            <div class="chatbg-preview-hint">预览区</div>
+          </div>
+          <div class="chatbg-actions">
+            <button class="btn-primary" id="chatbg-pick">从相册选择</button>
+            <button class="btn-ghost" id="chatbg-clear">恢复默认</button>
+            <button class="btn-ghost" id="chatbg-close">关闭</button>
+          </div>
+          <div class="setting-hint" style="text-align:center;font-size:12px;color:var(--text-secondary);margin-top:8px">图片仅保存在本机</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：字体大小 ============ -->
+    <div class="sheet-overlay" id="font-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">字体大小</div>
+        <div class="sheet-body">
+          <div class="font-preview" id="font-preview">这是一段预览文字。The quick brown fox.</div>
+          <input type="range" id="font-range" min="13" max="22" step="1" value="15" class="font-range">
+          <div class="font-labels"><span>小</span><span>标准</span><span>大</span></div>
+        </div>
+        <div class="sheet-actions">
+          <button class="btn-ghost" id="font-reset" type="button">恢复默认</button>
+          <button class="btn-primary" id="font-save">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：用量统计 ============ -->
+    <div class="sheet-overlay" id="usage-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">用量统计</div>
+        <div class="sheet-body">
+          <div class="usage-tabs">
+            <button class="usage-tab active" data-range="today">今天</button>
+            <button class="usage-tab" data-range="month">本月</button>
+            <button class="usage-tab" data-range="year">今年</button>
+            <button class="usage-tab" data-range="all">全部</button>
+          </div>
+          <div class="usage-summary" id="usage-summary"></div>
+          <div class="usage-by-model" id="usage-by-model"></div>
+          <div class="usage-actions">
+            <button class="btn-ghost" id="usage-reset" type="button">重置统计</button>
+            <button class="btn-primary" id="usage-close">关闭</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：应用名称 ============ -->
+    <div class="sheet-overlay" id="appname-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">应用名称</div>
+        <div class="sheet-body">
+          <div class="sheet-field">
+            <input type="text" id="anf-name" placeholder="Mavis" />
+          </div>
+          <div class="sheet-actions">
+            <button class="btn-primary" id="anf-save">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：Skill 技能库 ============ -->
+    <div class="sheet-overlay" id="skill-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">🛠️ Skill 技能库</div>
+        <div class="sheet-body">
+          <div class="skill-tabs">
+            <button class="skill-tab active" data-tab="market">🏪 市场</button>
+            <button class="skill-tab" data-tab="installed">📦 已装载</button>
+            <button class="skill-tab" data-tab="create">✨ 创建</button>
+          </div>
+          <!-- 市场 Tab -->
+          <div class="skill-tab-content" id="skill-market">
+            <div class="skill-search-row">
+              <input type="text" id="skill-search" placeholder="搜索 Skill...">
+            </div>
+            <div class="skill-list" id="skill-market-list"></div>
+          </div>
+          <!-- 已装载 Tab -->
+          <div class="skill-tab-content" id="skill-installed" style="display:none">
+            <div class="skill-list" id="skill-installed-list"></div>
+            <div class="setting-hint">已装载的 Skill 会在聊天中自动生效。AI 也可以根据你的偏好自动生成 Skill。</div>
+          </div>
+          <!-- 创建 Tab -->
+          <div class="skill-tab-content" id="skill-create" style="display:none">
+            <div class="sheet-field">
+              <label>Skill 名称</label>
+              <input type="text" id="sk-name" placeholder="例如：代码审查助手">
+            </div>
+            <div class="sheet-field">
+              <label>图标 (emoji)</label>
+              <input type="text" id="sk-icon" maxlength="4" placeholder="🔍">
+            </div>
+            <div class="sheet-field">
+              <label>描述</label>
+              <input type="text" id="sk-desc" placeholder="一句话说明 Skill 用途">
+            </div>
+            <div class="sheet-field">
+              <label>系统提示词 (Skill 指令)</label>
+              <textarea id="sk-prompt" rows="5" placeholder="当用户请求代码审查时，你作为一个专业的代码审查员..."></textarea>
+            </div>
+            <div class="sheet-field row">
+              <label>启用自动触发</label>
+              <label class="switch"><input type="checkbox" id="sk-auto" checked /><span class="slider"></span></label>
+            </div>
+            <div class="sheet-actions">
+              <button class="btn-ghost" id="sk-import">📥 导入</button>
+              <button class="btn-primary" id="sk-save">💾 保存</button>
+            </div>
+            <div class="setting-hint">导入支持 JSON 格式 Skill 文件。开启自动触发后，Skill 会作为系统提示注入每次对话。</div>
+          </div>
+        </div>
+        <div class="sheet-actions">
+          <button class="btn-ghost" id="skill-close">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：提示词项编辑 ============ -->
+    <div class="sheet-overlay" id="pl-item-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title" id="pl-item-title">新建</div>
+        <div class="sheet-body">
+          <input type="hidden" id="pl-item-type" />
+          <input type="hidden" id="pl-item-idx" value="-1" />
+          <input type="hidden" id="pl-item-group" value="" />
+          <div class="sheet-field">
+            <label>名称</label>
+            <input type="text" id="pl-item-name" placeholder="例如：替换称呼" />
+          </div>
+          <div class="sheet-field" id="pl-field-keyword" style="display:none">
+            <label>触发关键词（世界书：用户消息包含此词时注入）</label>
+            <input type="text" id="pl-item-keyword" placeholder="例如：魔法、森林" />
+          </div>
+          <div class="sheet-field" id="pl-field-pattern" style="display:none">
+            <label>正则表达式 (匹配模式)</label>
+            <input type="text" id="pl-item-pattern" placeholder="例如：老板" />
+          </div>
+          <div class="sheet-field" id="pl-field-replacement" style="display:none">
+            <label>替换为</label>
+            <input type="text" id="pl-item-replacement" placeholder="例如：主人" />
+          </div>
+          <div class="sheet-field">
+            <label>内容 / 描述 / 注入文本</label>
+            <textarea id="pl-item-content" rows="5" placeholder="提示词内容..."></textarea>
+          </div>
+          <div class="sheet-field row">
+            <label>启用</label>
+            <label class="switch"><input type="checkbox" id="pl-item-active" /><span class="slider"></span></label>
+          </div>
+          <div class="sheet-actions">
+            <button class="btn-ghost" id="pl-item-delete" style="display:none">删除</button>
+            <button class="btn-primary" id="pl-item-save">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 弹窗：下载安卓 App ============ -->
+    <div class="sheet-overlay" id="android-sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">📱 下载安卓 App</div>
+        <div class="sheet-body">
+          <div class="dl-section">
+            <div class="dl-section-title">方式一：PWA 直接安装（推荐）</div>
+            <div class="dl-section-desc">用 Chrome / Edge 浏览器打开本页面，即可一键安装到桌面，体验接近原生 App。</div>
+            <div class="dl-steps">
+              <div class="dl-step"><span class="dl-step-num">1</span><span>安卓 Chrome 打开本页地址</span></div>
+              <div class="dl-step"><span class="dl-step-num">2</span><span>点右上角 ⋮ 菜单</span></div>
+              <div class="dl-step"><span class="dl-step-num">3</span><span>选「添加到主屏幕 / 安装应用」</span></div>
+              <div class="dl-step"><span class="dl-step-num">4</span><span>桌面出现 Mavis 图标，点开即可</span></div>
+            </div>
+            <button class="btn-primary dl-btn" id="dl-install-pwa" type="button">📲 一键安装到桌面</button>
+            <div class="dl-hint" id="dl-install-hint"></div>
+          </div>
+
+          <div class="dl-divider"><span>或</span></div>
+
+          <div class="dl-section">
+            <div class="dl-section-title">方式二：打包成 APK 安装包</div>
+            <div class="dl-section-desc">用 PWABuilder 把本站打包成 .apk，安装到任意安卓手机（无需浏览器）。</div>
+            <div class="dl-steps">
+              <div class="dl-step"><span class="dl-step-num">1</span><span>复制下方站点地址</span></div>
+              <div class="dl-step"><span class="dl-step-num">2</span><span>打开 pwabuilder.com，粘贴地址</span></div>
+              <div class="dl-step"><span class="dl-step-num">3</span><span>点 Generate → 选 Android</span></div>
+              <div class="dl-step"><span class="dl-step-num">4</span><span>下载 .apk，传到手机安装</span></div>
+            </div>
+            <div class="dl-url-row">
+              <input type="text" id="dl-site-url" readonly />
+              <button class="btn-mini" id="dl-copy-url" type="button">复制</button>
+            </div>
+            <button class="btn-primary dl-btn" id="dl-open-pwabuilder" type="button">🔧 打开 PWABuilder</button>
+          </div>
+
+          <div class="dl-section">
+            <div class="dl-section-title">方式三：API 形式接入</div>
+            <div class="dl-section-desc">本应用兼容 OpenAI 协议，可用任意支持自定义接口的安卓客户端接入。</div>
+            <div class="dl-api-block">
+              <div class="dl-api-row"><span class="dl-api-k">接口地址</span><span class="dl-api-v" id="dl-api-endpoint">--</span></div>
+              <div class="dl-api-row"><span class="dl-api-k">协议</span><span class="dl-api-v">OpenAI Chat Completions</span></div>
+              <div class="dl-api-row"><span class="dl-api-k">模型</span><span class="dl-api-v" id="dl-api-model">--</span></div>
+            </div>
+            <div class="dl-section-desc" style="margin-top:8px">推荐安卓客户端：ChatX / OpenCat / BotGem / Cherry Studio 等，填入上方接口与 Key 即可。</div>
+          </div>
+        </div>
+        <div class="sheet-actions">
+          <button class="btn-primary" id="android-close">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 更新提示横幅 -->
+    <div class="update-banner" id="update-banner">
+      <div class="ub-icon">✨</div>
+      <div class="ub-text">
+        <div class="ub-title">发现新版本</div>
+        <div class="ub-sub">点击立即更新</div>
+      </div>
+      <button class="ub-btn" id="update-apply-btn" type="button">更新</button>
+      <button class="ub-close" id="update-close-btn" type="button" aria-label="稍后再说">×</button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
